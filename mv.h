@@ -30,10 +30,6 @@
 #ifndef MV_H
 #define MV_H
 
-#ifdef _MSC_VER
-#define _CRT_SECURE_NO_WARNINGS
-#endif
-
 #include <math.h>
 #include <memory.h>
 #include <stdio.h>
@@ -114,18 +110,18 @@ float mvVecScalarProduct3(const float* a, const float* b) { return (a[0] * b[0])
 float mvVecScalarProduct4(const float* a, const float* b) { return (a[0] * b[0]) + (a[1] * b[1]) + (a[2] * b[2]) + (a[3] * b[3]); }
 
 /* vector length */
-float mvVecLength2(const float* v) { return sqrtf((v[0] * v[0]) + (v[1] * v[1])); }
-float mvVecLength3(const float* v) { return sqrtf((v[0] * v[0]) + (v[1] * v[1]) + (v[2] * v[2])); }
+float mvVecLength2(const float* v) { return (float)sqrt((v[0] * v[0]) + (v[1] * v[1])); }
+float mvVecLength3(const float* v) { return (float)sqrt((v[0] * v[0]) + (v[1] * v[1]) + (v[2] * v[2])); }
 
 
 /* angle between two vectors */
 float mvVecAngleBetween2(const float* a, const float* b)
 {
-	return (float)acos( ((a[0] * b[0]) + (a[1] * b[1])) / (sqrtf((a[0] * a[0]) + (a[1] * a[1])) * sqrtf((b[0] * b[0]) + (b[1] * b[1]))));
+	return (float)acos( ((a[0] * b[0]) + (a[1] * b[1])) / ((float)sqrt((a[0] * a[0]) + (a[1] * a[1])) * sqrtf((b[0] * b[0]) + (b[1] * b[1]))));
 }
 float mvVecAngleBetween3(const float* a, const float* b)
 {
-	return (float)acos( ((a[0] * b[0]) + (a[1] * b[1]) + (a[2] * b[2])) / (sqrtf((a[0] * a[0]) + (a[1] * a[1]) + (a[2] * a[2])) * sqrtf((b[0] * b[0]) + (b[1] * b[1]) + (b[2] * b[2]))));
+	return (float)acos( ((a[0] * b[0]) + (a[1] * b[1]) + (a[2] * b[2])) / ((float)sqrt((a[0] * a[0]) + (a[1] * a[1]) + (a[2] * a[2])) * sqrtf((b[0] * b[0]) + (b[1] * b[1]) + (b[2] * b[2]))));
 }
 
 /* normalize vector*/
