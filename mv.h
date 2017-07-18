@@ -2,6 +2,7 @@
  *	MV - A Matrix Vector Mathematics Library
  *	Performs common and useful mathematical operations used in 3D graphics.
  *	C89 Compliant
+ *	Compiled with: gcc -std=c89 -pedantic -Wall
  *	www.setsunasoft.com
  *
  *
@@ -30,6 +31,10 @@
 #ifndef MV_H
 #define MV_H
 
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
 #include <math.h>
 #include <memory.h>
 #include <stdio.h>
@@ -37,8 +42,6 @@
 #ifdef __cplusplus
 	extern "C" {
 #endif
-
-
 
 /* Vector Data Types */
 typedef float MVvec2[2];
@@ -117,11 +120,11 @@ float mvVecLength3(const float* v) { return (float)sqrt((v[0] * v[0]) + (v[1] * 
 /* angle between two vectors */
 float mvVecAngleBetween2(const float* a, const float* b)
 {
-	return (float)acos( ((a[0] * b[0]) + (a[1] * b[1])) / ((float)sqrt((a[0] * a[0]) + (a[1] * a[1])) * sqrtf((b[0] * b[0]) + (b[1] * b[1]))));
+	return (float)acos( ((a[0] * b[0]) + (a[1] * b[1])) / (sqrt((a[0] * a[0]) + (a[1] * a[1])) * sqrt((b[0] * b[0]) + (b[1] * b[1]))));
 }
 float mvVecAngleBetween3(const float* a, const float* b)
 {
-	return (float)acos( ((a[0] * b[0]) + (a[1] * b[1]) + (a[2] * b[2])) / ((float)sqrt((a[0] * a[0]) + (a[1] * a[1]) + (a[2] * a[2])) * sqrtf((b[0] * b[0]) + (b[1] * b[1]) + (b[2] * b[2]))));
+	return (float)acos( ((a[0] * b[0]) + (a[1] * b[1]) + (a[2] * b[2])) / (sqrt((a[0] * a[0]) + (a[1] * a[1]) + (a[2] * a[2])) * sqrt((b[0] * b[0]) + (b[1] * b[1]) + (b[2] * b[2]))));
 }
 
 /* normalize vector*/
@@ -312,18 +315,17 @@ void mvMatCreateRotation3(MVmat3 m, float angle, float xAxis, float yAxis, float
 {
 	float x, y, z;
 	float c = (float)cos(angle);
-	float s = (float)sinf(angle);
+	float s = (float)sin(angle);
 	float t = 1.0f - (float)cos(angle);
 	/* Get normalized axis */
-	MVvec3 axis = {xAxis, yAxis, zAxis};
+	MVvec3 axis;
+	axis[0] = xAxis; axis[1] = yAxis; axis[2] = zAxis;
 	mvVecNormalize3(axis);
 	x = axis[0]; y = axis[1]; z = axis[2];
-	{
-		MVmat3 tmp = {	  (x*x*t)+c,      (t*x*y)-(s*z),   (t*x*z)+(s*y) \
-						, (t*x*y)+(s*z),  (t*y*y)+c,       (t*y*z)-(s*x) \
-						, (t*x*z)-(s*y),  (t*y*z)+(s*x),   (t*z*z)+c };
-		memcpy(m, tmp, sizeof(MVmat3));
-	}
+
+	m[0] = (x*x*t)+c;		m[3] = (t*x*y)-(s*z);	m[6] = (t*x*z)+(s*y);
+	m[1] = (t*x*y)+(s*z);	m[4] = (t*y*y)+c;		m[7] = (t*y*z)-(s*x);
+	m[2] = (t*x*z)-(s*y);	m[5] = (t*y*z)+(s*x);	m[8] = (t*z*z)+c;
 }
 void mvMatCreateRotation4(MVmat4 m, float angle, float xAxis, float yAxis, float zAxis)
 {
@@ -332,16 +334,15 @@ void mvMatCreateRotation4(MVmat4 m, float angle, float xAxis, float yAxis, float
 	float s = (float)sin(angle);
 	float t = 1.0f - (float)cos(angle);
 	/* Get normalized axis */
-	MVvec3 axis = {xAxis, yAxis, zAxis};
+	MVvec3 axis;
+	axis[0] = xAxis; axis[1] = yAxis; axis[2] = zAxis;
 	mvVecNormalize3(axis);
 	x = axis[0]; y = axis[1]; z = axis[2];
-	{
-		MVmat4 tmp = {	  (x*x*t)+c,      (t*x*y)-(s*z),   (t*x*z)+(s*y),   0.0f \
-						, (t*x*y)+(s*z),  (t*y*y)+c,       (t*y*z)-(s*x),   0.0f \
-						, (t*x*z)-(s*y),  (t*y*z)+(s*x),   (t*z*z)+c,       0.0f \
-						, 0.0f,           0.0f,            0.0f,            1.0f};
-		memcpy(m, tmp, sizeof(MVmat4));
-	}
+
+	m[0] = (x*x*t)+c;		m[4] = (t*x*y)-(s*z);	m[8] = (t*x*z)+(s*y);	m[12] = 0.0f;
+	m[1] = (t*x*y)+(s*z);	m[5] = (t*y*y)+c;		m[9] = (t*y*z)-(s*x);	m[13] = 0.0f;
+	m[2] = (t*x*z)-(s*y);	m[6] = (t*y*z)+(s*x);	m[10] = (t*z*z)+c;		m[14] = 0.0f;
+	m[3] = 0.0f;			m[7] = 0.0f;			m[11] = 0.0f;			m[15] = 1.0f;
 }
 
 /* rotate matrix */
@@ -396,58 +397,58 @@ void mvMatVecMultiply4(float* r, const float* m, const float* v)
 }
 
 /* Generate orthographic projection matrix */
-void mvMatCreateOrthographic(MVmat4 m, float left, float right, float bottom, float top, float near, float far)
+void mvMatCreateOrthographic(MVmat4 m, float left, float right, float bottom, float top, float zNear, float zFar)
 {
 	MVmat4 tmp = {0.0f};
 	tmp[0] = 2.0f/(right-left);
 	tmp[5] = 2.0f/(top-bottom);
-	tmp[10] = -2.0f/(far-near);
+	tmp[10] = -2.0f/(zFar-zNear);
 	tmp[12] = -(right+left)/(right-left);
 	tmp[13] = -(top+bottom)/(top-bottom);
-	tmp[14] = -(far+near)/(far-near);
+	tmp[14] = -(zFar+zNear)/(zFar-zNear);
 	tmp[15] = 1.0f;
 	memcpy(m, tmp, sizeof(MVmat4));
 }
 
 /* Multiply specified matrix with an orthographic projection matrix */
-void mvOrtho(MVmat4 m, float left, float right, float bottom, float top, float near, float far)
+void mvOrtho(MVmat4 m, float left, float right, float bottom, float top, float zNear, float zFar)
 {
 	MVmat4 tmp;
-	mvMatCreateOrthographic(tmp, left, right, bottom, top, near, far);
+	mvMatCreateOrthographic(tmp, left, right, bottom, top, zNear, zFar);
 	mvMatMultiply4(tmp, m, tmp);
 	memcpy(m, tmp, sizeof(MVmat4));
 }
 
 /* create perspective projection matrix */
-void mvMatCreatePerspective(MVmat4 m, float left, float right, float bottom, float top, float near, float far)
+void mvMatCreatePerspective(MVmat4 m, float left, float right, float bottom, float top, float zNear, float zFar)
 {
 	MVmat4 tmp = {0.0f};
-	tmp[0] = (2.0f*near)/(right-left);
-	tmp[5] = (2.0f*near)/(top-bottom);
+	tmp[0] = (2.0f*zNear)/(right-left);
+	tmp[5] = (2.0f*zNear)/(top-bottom);
 	tmp[8] = (right+left)/(right-left);
 	tmp[9] = (top+bottom)/(top-bottom);
-	tmp[10] = -(far+near)/(far-near);
+	tmp[10] = -(zFar+zNear)/(zFar-zNear);
 	tmp[11] = -1.0f;
-	tmp[14] = -(2.0f*far*near)/(far-near);
+	tmp[14] = -(2.0f*zFar*zNear)/(zFar-zNear);
 	memcpy(m, tmp, sizeof(MVmat4));
 }
 
 /* multiply current matrix by perspective projection matrix */
-void mvFrustum(MVmat4 m, float left, float right, float bottom, float top, float near, float far)
+void mvFrustum(MVmat4 m, float left, float right, float bottom, float top, float zNear, float zFar)
 {
 	MVmat4 tmp;
-	mvMatCreatePerspective(tmp, left, right, bottom, top, near, far);
+	mvMatCreatePerspective(tmp, left, right, bottom, top, zNear, zFar);
 	mvMatMultiply4(tmp, m, tmp);
 	memcpy(m, tmp, sizeof(MVmat4));
 }
 
 /* multiply current matrix by perspective projection matrix - angle in radians */
-void mvPerspective(MVmat4 m, float fovyRadians, float aspect, float near, float far)
+void mvPerspective(MVmat4 m, float fovyRadians, float aspect, float zNear, float zFar)
 {
 	float y, x;
-	y = near * (float)tan(fovyRadians / 2.0f);
+	y = zNear * (float)tan(fovyRadians / 2.0f);
 	x = y * aspect;
-	mvFrustum(m, -x, x, -y, y, near, far);
+	mvFrustum(m, -x, x, -y, y, zNear, zFar);
 }
 
 /* ------------------------------------------------------------------- */
